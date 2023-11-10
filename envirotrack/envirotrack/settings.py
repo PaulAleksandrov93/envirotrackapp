@@ -197,17 +197,24 @@ CORS_ALLOW_ALL_ORIGINS = True
 INTERNAL_IPS = [
     '127.0.0.1',  
 ]
-# LOGGING = {
-#     'version': 1,
-#     'handlers': {
-#         'console': {'class': 'logging.StreamHandler'}
-#     },
-#     'loggers': {
-#         'django.db.backends': {
-#             'handlers': ['console'],
-#             'level': 'DEBUG'
-#         }
-#     }
-# }
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'debug.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
 
 CELERY_BROKER_URL = 'redis://redis:6379/0'

@@ -3,6 +3,8 @@
 ответственными лицами, измерительными приборами и аутентификацией пользователей.
 """
 
+import logging
+
 
 from django.db.models import Q
 from rest_framework.response import Response
@@ -54,39 +56,48 @@ def getRoutes(request):
     return Response(routes)
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
 def getEnviromentalParameters(request):
-    """
-    Возвращает все записи с параметрами окружающей среды.
+    try:
+        """
+        Возвращает все записи с параметрами окружающей среды.
 
-    Args:
-        request (Request): Объект HTTP-запроса.
+        Args:
+            request (Request): Объект HTTP-запроса.
 
-    Returns:
-        Response: JSON-ответ с параметрами окружающей среды.
-    """
-    user = request.user
-    responsible = request.query_params.get('responsible')
-    room = request.query_params.get('room')
-    date = request.query_params.get('date')
-    
-    parameters = EnviromentalParameters.objects.all().prefetch_related('room', 'responsible', 'measurement_instrument')
+        Returns:
+            Response: JSON-ответ с параметрами окружающей среды.
+        """
+        user = request.user
+        responsible = request.query_params.get('responsible')
+        room = request.query_params.get('room')
+        date = request.query_params.get('date')
 
-    if responsible:
-        parameters = parameters.filter(responsible=responsible)
+        parameters = EnviromentalParameters.objects.all().prefetch_related('room', 'responsible', 'measurement_instrument')
 
-    if room:
-        parameters = parameters.filter(room=room)
+        if responsible:
+            parameters = parameters.filter(responsible=responsible)
 
-    if date:
-        created = datetime.strptime(date, '%Y-%m-%d').date()
-        parameters = parameters.filter(created_at__date=created)
+        if room:
+            parameters = parameters.filter(room=room)
 
-    parameters = parameters.order_by('-created_at')  # Добавляем сортировку по дате создания записи
-    
-    serializer = EnvironmentalParametersSerializer(parameters, many=True, context={'request': request})
-    return Response(serializer.data)
+        if date:
+            created = datetime.strptime(date, '%Y-%m-%d').date()
+            parameters = parameters.filter(created_at__date=created)
+
+        parameters = parameters.order_by('-created_at')  # Добавляем сортировку по дате создания записи
+
+        serializer = EnvironmentalParametersSerializer(parameters, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    except Exception as e:
+        logger.error(f'Произошла ошибка во время выполнения getEnviromentalParameters: {e}', exc_info=True)
+        return Response({'error': 'Внутренняя ошибка сервера'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])
